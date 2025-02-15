@@ -9,6 +9,7 @@ import TextInput from '@/Components/TextInput.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import Select from '@/Components/Select.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
+import Spinner from '@/Components/Spinner.vue';
 import axios from 'axios';
 
 defineProps({
@@ -19,6 +20,7 @@ defineProps({
 const errors = ref([]); 
 const opendrawer = ref(false);
 const titledrawer = ref('Agregar materia')
+const loadSpinner = ref(false);
 
 const openAside = (id) => {
     titledrawer.value = id ? 'Editar materia' : 'Agregar materia';
@@ -27,9 +29,10 @@ const openAside = (id) => {
 }
 
 function closeDrawer() {  
-    form.reset('dificultad', 'name', 'profesor');    
+    form.reset();    
     document.body.style.overflow = '';
-    opendrawer.value = false
+    opendrawer.value = false;
+    errors.value = [];
 }
 
 const form = useForm({
@@ -41,17 +44,22 @@ const form = useForm({
 
 const submit = async () => {
     try {
+        loadSpinner.value = true;
         let response = await axios.post(route('add.materia'), form);        
         if (response.data.status == 1) {
-            form.reset('dificultad', 'name', 'profesor');
-            
+            form.reset();
+            loadSpinner.value = false;
             router.reload({ only: ['materias'] });
             closeDrawer();
+            errors.value = [];
             
         } else {
+            loadSpinner.value = false;
+            errors.value = [];
             alert(response.data.msg);
         }
-    } catch (error) {
+    } catch (error) {      
+        loadSpinner.value = false;  
         errors.value = error.response.data.errors;
     }
     
@@ -149,13 +157,16 @@ const DeleteMateria = async (id)  => {
                 </div>
                 
                 <div class="flex justify-end"> 
-                    <PrimaryButton>
-                        <div class="flex items-center space-x-2">
+                    <PrimaryButton :disabled="loadSpinner">
+                        <div v-if="loadSpinner">
+                            <Spinner />
+                        </div>
+                        <div v-else class="flex items-center space-x-2">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                             </svg>
                             <p>{{ titledrawer }}</p>
-                        </div>
+                        </div>                        
                     </PrimaryButton>
                 </div>
             </form>
@@ -205,12 +216,18 @@ const DeleteMateria = async (id)  => {
                                     <p class="text-gray-500">{{ item.profesor }}</p>
                                 </div>                                
                                 
-                                <div class="flex items-center mb-5 text-blue-500">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                <div
+                                    class="flex items-center mb-5"
+                                    :class="{
+                                        'text-red-500': item.dificultad === 'Dificultad alta',
+                                        'text-yellow-500': item.dificultad === 'Dificultad media',
+                                        'text-blue-500': item.dificultad === 'Dificultad baja'
+                                    }">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-2 size-6">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
                                     </svg>
                                     <p>{{ item.dificultad }}</p>
-                                </div>
+                                </div>                                
 
                                 <div class="flex items-center justify-center">
                                     <SecondaryButton type="button" class="mr-5 cursor-pointer" @click="EditMateria(item.id)">

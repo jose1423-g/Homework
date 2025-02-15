@@ -10,6 +10,7 @@ class materias extends Model
 
     protected $fillable = [
         'name',
+        'user_id',
         'profesor',
         'dificultad_id',
     ];

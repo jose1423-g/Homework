@@ -1,41 +1,145 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { ref } from 'vue';
-import { Head, useForm } from '@inertiajs/vue3';
+import { Head, useForm, router } from '@inertiajs/vue3';
 import DrawerLeft from '@/Components/DrawerLeft.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
+import DangerButton from '@/Components/DangerButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import TextTarea from '@/Components/TextTarea.vue';
 import Select from '@/Components/Select.vue';
+import Spinner from '@/Components/Spinner.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
 import axios from 'axios';
 
-const opendrawer = ref(false);
-const titledrawer = ref('')
+const props = defineProps({
+    tareas: Object,
+    materias: Object,
+    estatus_pendiente: Object,
+    estatus: Object,
+})
 
-const openAside = () => {
-    titledrawer.value = 'Agregar Tarea';
+const opendrawer = ref(false);
+const titledrawer = ref('Agregar tarea')
+const errors = ref([]);
+const loadSpinner = ref(false);
+const dificultad_name = ref('');
+const showEstatus = ref(false);
+const loadSpinnerDelete = ref(false);
+
+const openAside = (id) => {
+    titledrawer.value = id ? 'Editar tarea' : 'Agregar tarea';    
     document.body.style.overflow = 'hidden';
     opendrawer.value = true;
 }
 
 function closeDrawer() {  
+    form.reset();
     document.body.style.overflow = '';
-  opendrawer.value = false
+    showEstatus.value  = false;
+    opendrawer.value = false;    
+    errors.value = [];
 }
 
 const form = useForm({
+    id: '',
     titulo: '',
     fechaentrega: '',
     descripcion: '',
-    materia: '',
+    materias_id: '',
+    dificultad_id: '',
+    estatus_id: props.estatus_pendiente.id,
     profesor: '',
 });
 
 const submit = async () => {
-    console.log(form);
-    // let response = axios.post(route(''));
+    try {
+        loadSpinner.value = true;
+        let response = await axios.post(route('add.tareas'), form);        
+        if (response.data.status == 1) {
+            form.reset();            
+            loadSpinner.value = false;
+            router.reload({ only: ['tareas'] });
+            closeDrawer();
+            errors.value = [];
+        } else {
+            loadSpinner.value = false;
+            errors.value = [];
+            alert(response.data.msg);
+        }
+    } catch (error) {
+        loadSpinner.value = false;
+        errors.value = error.response.data.errors;
+    }
+}
+
+const EditTarea = async (id) => {
+    try {
+        
+        let response = await axios.get(route('edit.tarea', id));
+        
+        if (response.data.status == 0) {
+            alert(response.data.msg)
+        } else {
+            openAside(id);
+            showEstatus.value  = true;
+            
+            response.data.forEach(element => {
+                form.id = element.id;
+                form.titulo = element.titulo;
+                form.fechaentrega = element.fechaentrega;
+                form.descripcion = element.descripcion;
+                form.materias_id = element.materia_id;
+                form.dificultad_id = element.dificultad_id;
+                form.estatus_id = element.estatus_id;
+                form.profesor = element.profesor;
+                dificultad_name.value = element.dificultad_name;
+            });
+            
+        }
+    } catch (error) {
+        errors.value = error.response.data.errors;
+    }
+}
+
+const DeleteTarea = async (id)  => {
+    
+    if (!confirm('¿Estas seguro de elimnar la tarea?')) {
+        return false;
+    }
+    
+    try {
+        loadSpinnerDelete.value = true;
+        let response = await axios.delete(route('delete.tarea'), {
+            data: {
+                'id': id,
+            }
+        });
+        if (response.data.status == 1) {
+            router.reload({ only: ['tareas'] });
+            loadSpinnerDelete.value = false;
+        } else {
+            loadSpinnerDelete.value = false;
+            alert(response.data.msg);
+        }
+    } catch (error) {
+        loadSpinnerDelete.value = false;
+        // console.log(error);
+    }
+} 
+
+const CompleteInputandStatus = async () => {
+    
+    try {
+        let response = await axios.post(route('get.materia', form.materias_id));
+        form.profesor = response.data.materias.name;
+        form.dificultad_id = response.data.materias.dificultad_id;
+        dificultad_name.value = response.data.dificultad.name;
+    } catch (error) {
+        // console.log(error);
+    }
+    
 }
 
 </script>
@@ -48,45 +152,65 @@ const submit = async () => {
         <DrawerLeft :isOpen="opendrawer" @close="closeDrawer" :title="titledrawer">       
             <form @submit.prevent="submit" method="post" class="flex flex-col w-full h-full gap-5">
                 <div class="max-h-[400px] sm:max-h-[550px] overflow-y-auto p-5">
+
+                    <div>
+                        <TextInput 
+                            id="id"
+                            type="hidden"
+                            v-model="form.id"
+                        />
+                        
+                        <TextInput 
+                            id="dificultad_id"
+                            type="hidden"
+                            v-model="form.dificultad_id"
+                        />                                        
+                    </div>
                     
                     <div class="mb-4">
-                        <InputLabel for="titulo" value="Titulo de la tarea" />
+                        <InputLabel for="titulo" value="Titulo de la tarea *" />
                         <TextInput 
                             id="titulo"
                             type="text"
                             class="w-full mt-2"
                             v-model="form.titulo"
                         />
+                        <span v-if="errors.titulo" class="text-red-500">{{ errors.titulo[0] }}</span>
                     </div>
                     
                     <div class="mb-4">
-                        <InputLabel for="fechaentrega" value="Fecha de entrega" />
+                        <InputLabel for="fechaentrega" value="Fecha de entrega *" />
                         <TextInput 
                             id="fechaentrega"
                             type="date"
                             class="w-full mt-2"
                             v-model="form.fechaentrega"
                         />
+                        <span v-if="errors.fechaentrega" class="text-red-500">{{ errors.fechaentrega[0] }}</span>
                     </div>
 
                     <div class="mb-4">
-                        <InputLabel for="materia" value="Materia"/>
-                        <Select 
-                            id="materia"
+                        <InputLabel for="materias_id" value="Materia *"/>
+                        <Select
+                            id="materias_id"
                             class="w-full mt-2"
-                            v-model="form.descripcion"
-                        />
-                    </div>                    
+                            v-model="form.materias_id"
+                            @change="CompleteInputandStatus"
+                        >
+                            <option v-for="item in materias" :value="item.id">{{ item.name }}</option>
+                        </Select>
+                    </div>
                     
                     <div class="flex mb-4">
                         <p class="mr-2 font-semibold">Nivel de dificultad:</p>
-                        <span class="text-blue-500">Baja Dificultad</span>
-                        <!-- 
-                            rojo Alta Dificultad
-                            amarillo Dificultad media
-                            azul Baja Dificultad
-                        -->
-                    </div>
+                        <span
+                        :class="{
+                           'text-red-500': dificultad_name === 'Dificultad alta',
+                           'text-yellow-500': dificultad_name === 'Dificultad media',
+                           'text-blue-500': dificultad_name === 'Dificultad baja',
+                           
+                        }">{{ dificultad_name }}</span>
+                    </div>                    
 
                     <div class="mb-4">
                         <InputLabel for="profesor" value="Profesor" />
@@ -97,26 +221,41 @@ const submit = async () => {
                             class="w-full mt-2 bg-gray-100"
                             v-model="form.profesor"
                         />
-                    </div>
+                    </div> 
 
+                    <div class="mb-4" v-if="showEstatus">
+                        <InputLabel for="estatus_id" value="Estatus"/>
+                        <Select
+                            id="estatus_id"
+                            class="w-full mt-2"
+                            v-model="form.estatus_id"
+                        >
+                            <option v-for="item in estatus" :value="item.id">{{ item.name }}</option>
+                        </Select>
+                    </div>
+                    
                     <div class="mb-4">
-                        <InputLabel for="descripcion" value="Descripción de la tarea" />
+                        <InputLabel for="descripcion" value="Descripción de la tarea *" />
                         <TextTarea 
                             id="descripcion"
                             class="w-full mt-2"
                             v-model="form.descripcion"
                         />
+                        <span v-if="errors.descripcion" class="text-red-500">{{ errors.descripcion[0] }}</span>
                     </div>
-                                     
+                    
                 </div>
                 
                 <div class="flex justify-end">
-                    <PrimaryButton>
-                        <div class="flex items-center space-x-2">
+                    <PrimaryButton :disabled="loadSpinner">
+                        <div v-if="loadSpinner">
+                            <Spinner />
+                        </div>
+                        <div v-else class="flex items-center space-x-2">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                             </svg>
-                            <p>Agregar tarea</p>
+                            <p>{{ titledrawer }}</p>
                         </div>                                
                     </PrimaryButton>
                 </div>
@@ -130,7 +269,7 @@ const submit = async () => {
                         
                         <h3 class="text-2xl font-bold">Bienvenido {{ $page.props.auth.user.name }}</h3>
 
-                        <PrimaryButton type="button" @click="openAside">
+                        <PrimaryButton type="button" @click="openAside(false)">
                             <div class="flex items-center space-x-2">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
@@ -150,28 +289,40 @@ const submit = async () => {
                         <div class="grid grid-cols-1 gap-3 md:grid-cols-4"><!-- container -->
                             
                             <!-- card -->
-                            <div v-for="item in 9" class="col-span-2 px-4 py-3 border border-gray-200 rounded-md shadow-xl">
-                                <div class="flex items-center">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-2 text-gray-600 size-6">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 2.994v2.25m10.5-2.25v2.25m-14.252 13.5V7.491a2.25 2.25 0 0 1 2.25-2.25h13.5a2.25 2.25 0 0 1 2.25 2.25v11.251m-18 0a2.25 2.25 0 0 0 2.25 2.25h13.5a2.25 2.25 0 0 0 2.25-2.25m-18 0v-7.5a2.25 2.25 0 0 1 2.25-2.25h13.5a2.25 2.25 0 0 1 2.25 2.25v7.5m-6.75-6h2.25m-9 2.25h4.5m.002-2.25h.005v.006H12v-.006Zm-.001 4.5h.006v.006h-.006v-.005Zm-2.25.001h.005v.006H9.75v-.006Zm-2.25 0h.005v.005h-.006v-.005Zm6.75-2.247h.005v.005h-.005v-.005Zm0 2.247h.006v.006h-.006v-.006Zm2.25-2.248h.006V15H16.5v-.005Z" />
-                                    </svg>
-                                    <span class="text-gray-500">13/02/25</span>
+                            <div v-for="item in tareas" class="col-span-2 px-4 py-3 border border-gray-200 rounded-md shadow-xl">
+                                <div class="items-center justify-between block space-y-3 sm:space-y-0 sm:flex">
+                                    <div class="flex items-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-2 text-gray-600 size-6">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 2.994v2.25m10.5-2.25v2.25m-14.252 13.5V7.491a2.25 2.25 0 0 1 2.25-2.25h13.5a2.25 2.25 0 0 1 2.25 2.25v11.251m-18 0a2.25 2.25 0 0 0 2.25 2.25h13.5a2.25 2.25 0 0 0 2.25-2.25m-18 0v-7.5a2.25 2.25 0 0 1 2.25-2.25h13.5a2.25 2.25 0 0 1 2.25 2.25v7.5m-6.75-6h2.25m-9 2.25h4.5m.002-2.25h.005v.006H12v-.006Zm-.001 4.5h.006v.006h-.006v-.005Zm-2.25.001h.005v.006H9.75v-.006Zm-2.25 0h.005v.005h-.006v-.005Zm6.75-2.247h.005v.005h-.005v-.005Zm0 2.247h.006v.006h-.006v-.006Zm2.25-2.248h.006V15H16.5v-.005Z" />
+                                        </svg>
+                                        <span class="text-gray-500">{{ item.fechaentrega }}</span>
+                                    </div>
+                                    <div class="flex items-center" :class="{
+                                        'text-red-500': item.dificultad === 'Dificultad alta',
+                                        'text-yellow-500': item.dificultad === 'Dificultad media',
+                                        'text-blue-500': item.dificultad === 'Dificultad baja',
+                                    }">                                        
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-2 size-6">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+                                        </svg>
+                                        <span>{{ item.dificultad }}</span>
+                                    </div>
                                 </div>
                                 
-                                <h3 class="my-3 text-lg font-semibold text-center">Titulo tarea</h3>
+                                <h3 class="my-3 text-lg font-semibold text-center">{{ item.titulo }}</h3>
 
                                 <div class="flex items-center mb-4">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-2 text-gray-600 size-6">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
                                     </svg>
-                                    <p class="text-gray-500">Metodos Emergentes</p>
+                                    <p class="text-gray-500">{{ item.materia }}</p>
                                 </div>
                                 
                                 <div class="flex items-center mb-4">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-2 text-gray-600 size-6">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
                                     </svg>
-                                    <p class="text-gray-500">Vero Morales</p>
+                                    <p class="text-gray-500">{{ item.profesor }}</p>
                                 </div>
 
                                 <div class="flex justify-center mb-4">
@@ -182,20 +333,26 @@ const submit = async () => {
                                     </div>
                                     <div class="h-[10rem]  px-3 overflow-y-auto">
                                         <p class="text-gray-500">
-                                            aun no has introducido nada :(                                            
+                                            {{ item.descripcion }}                                            
                                         </p>
                                     </div>                                            
                                 </div>
                                 
-                                <div class="flex items-center mb-4 text-blue-500">
+                                <div 
+                                    class="flex items-center mb-4"
+                                    :class="{
+                                        'text-red-500': item.estatus === 'Pendiente',
+                                        'text-orange-500': item.estatus === 'En proceso',
+                                        'text-green-500': item.estatus === 'Finalizado',
+                                    }">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-2 size-6">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                                     </svg>
-                                    <p>Pendiente</p>
-                                </div>
+                                    <p>{{ item.estatus }}</p>
+                                </div>                                
 
                                 <div class="flex items-center justify-center">
-                                    <SecondaryButton type="button" class="mr-5 cursor-pointer">
+                                    <SecondaryButton type="button" class="mr-5 cursor-pointer" @click="EditTarea(item.id)">
                                         <div class="flex items-center">
                                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-2 size-6">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
@@ -203,15 +360,17 @@ const submit = async () => {
                                             <p>Editar</p>
                                         </div>                                        
                                     </SecondaryButton>
-                                    <SecondaryButton type="button" class="cursor-pointer">
-                                        <div class="flex items-center">
-                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-2 size-6">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                                            </svg>
-                                            <p>ver</p>
+                                    <DangerButton type="button" class="cursor-pointer" @click="DeleteTarea(item.id)">
+                                        <div v-if="loadSpinnerDelete">
+                                            <Spinner />
                                         </div>
-                                    </SecondaryButton>
+                                        <div v-else class="flex items-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-2 size-6">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                                            </svg>
+                                            <p>Eliminar</p>
+                                        </div>
+                                    </DangerButton>
                                 </div>
                             </div> <!--  card -->                       
                         </div>                        

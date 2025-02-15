@@ -3,6 +3,7 @@
 use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use App\Http\Controllers\MateriasController;
+use App\Http\Controllers\TareasController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -15,9 +16,7 @@ Route::get('/', function () {
     ]);
 });
 
-Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('/dashboard', [TareasController::class, 'Show'])->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::get('/maestros', [MateriasController::class, 'Show'])->middleware(['auth', 'verified'])->name('maestros');
 
@@ -30,6 +29,12 @@ Route::middleware('auth')->group(function () {
     Route::post('/addmateria', [MateriasController::class, 'Addmateria'])->name('add.materia');
     Route::get('/editmaestros/{id}', [MateriasController::class, 'EditMateria'])->name('edit.materia');
     Route::delete('/deletemaestros', [MateriasController::class, 'DeleteMateria'])->name('delete.materia');
+
+    /* create tareas */
+    Route::post('/getmateria/{id}', [TareasController::class, 'GetMateria'])->name('get.materia');
+    Route::post('/addtareas', [TareasController::class, 'AddTarea'])->name('add.tareas');
+    Route::get('/editarea/{id}', [TareasController::class, 'EditTarea'])->name('edit.tarea');
+    Route::delete('/deletemaestros', [TareasController::class, 'DeleteTarea'])->name('delete.tarea');
 
 });
 
