@@ -47,9 +47,14 @@ onUnmounted(() => {
         </div>
         <!-- drawer -->
         <div 
-            :class="['fixed top-0 right-0 w-full h-full sm:w-[30rem] rounded-l-xl bg-white shadow-lg transform transition-transform duration-300', { 'translate-x-full': !isOpen }]"        
-        >        
-            <div class="flex items-center justify-between p-4 border-b-2 border-gray-100">
+            :class="['fixed bottom-0 left-0 w-full h-auto flex flex-col grow bg-white rounded-t-xl rounded-r-xl shadow-lg transform transition-transform duration-300', 
+            { 
+                'translate-y-full': !isOpen
+            }
+            ]"        
+        >
+            <!-- header -->
+            <div class="flex items-center justify-between w-full p-4 border-b-2 border-gray-100">
                 <h2 class="text-lg font-semibold">{{ title }}</h2>
                 <button type="button" class="cursor-pointer" @click="close">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6">
@@ -57,12 +62,12 @@ onUnmounted(() => {
                     </svg>
                 </button>
             </div>
-            <div class="px-3 py-5">                
-                <!-- content -->
-                <div class="px-3 max-h-[400px] sm:max-h-[calc(100vh-140px)] md:max-h-[550px] overflow-y-auto">
+            <div class="px-3 py-5"><!-- container -->
+                <!-- contenido principal -->
+                <div class="px-3 max-h-[300px] sm:max-h-[calc(100vh-140px)] overflow-y-auto">
                     <slot />
                 </div>
-                <!-- footer -->
+
                 <div v-if="$slots.footer">
                     <slot name="footer" />
                 </div>

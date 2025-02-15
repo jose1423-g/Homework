@@ -12,6 +12,8 @@ import Select from '@/Components/Select.vue';
 import Spinner from '@/Components/Spinner.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
 import axios from 'axios';
+import DrawerBottom from '@/Components/DrawerBottom.vue';
+import FormCreateTask from '@/Components/FormCreateTask.vue';
 
 const props = defineProps({
     tareas: Object,
@@ -25,19 +27,18 @@ const titledrawer = ref('Agregar tarea')
 const errors = ref([]);
 const loadSpinner = ref(false);
 const dificultad_name = ref('');
-const showEstatus = ref(false);
-const loadSpinnerDelete = ref(false);
+const showInputEstatus = ref(false);
 
-const openAside = (id) => {
+const openDrawerLeft = (id) => {
     titledrawer.value = id ? 'Editar tarea' : 'Agregar tarea';    
     document.body.style.overflow = 'hidden';
     opendrawer.value = true;
 }
 
-function closeDrawer() {  
+function closeDrawerLeft() {  
     form.reset();
     document.body.style.overflow = '';
-    showEstatus.value  = false;
+    showInputEstatus.value  = false;
     opendrawer.value = false;    
     errors.value = [];
 }
@@ -61,7 +62,7 @@ const submit = async () => {
             form.reset();            
             loadSpinner.value = false;
             router.reload({ only: ['tareas'] });
-            closeDrawer();
+            closeDrawerLeft();
             errors.value = [];
         } else {
             loadSpinner.value = false;
@@ -82,8 +83,8 @@ const EditTarea = async (id) => {
         if (response.data.status == 0) {
             alert(response.data.msg)
         } else {
-            openAside(id);
-            showEstatus.value  = true;
+            openDrawerLeft(id);
+            showInputEstatus.value  = true;
             
             response.data.forEach(element => {
                 form.id = element.id;
@@ -110,7 +111,6 @@ const DeleteTarea = async (id)  => {
     }
     
     try {
-        loadSpinnerDelete.value = true;
         let response = await axios.delete(route('delete.tarea'), {
             data: {
                 'id': id,
@@ -118,13 +118,10 @@ const DeleteTarea = async (id)  => {
         });
         if (response.data.status == 1) {
             router.reload({ only: ['tareas'] });
-            loadSpinnerDelete.value = false;
         } else {
-            loadSpinnerDelete.value = false;
             alert(response.data.msg);
         }
     } catch (error) {
-        loadSpinnerDelete.value = false;
         // console.log(error);
     }
 } 
@@ -139,7 +136,6 @@ const CompleteInputandStatus = async () => {
     } catch (error) {
         // console.log(error);
     }
-    
 }
 
 </script>
@@ -148,106 +144,23 @@ const CompleteInputandStatus = async () => {
     <Head title="Tareas" />
 
     <AuthenticatedLayout>
-
-        <DrawerLeft :isOpen="opendrawer" @close="closeDrawer" :title="titledrawer">       
-            <form @submit.prevent="submit" method="post" class="flex flex-col w-full h-full gap-5">
-                <div class="max-h-[400px] sm:max-h-[550px] overflow-y-auto p-5">
-
-                    <div>
-                        <TextInput 
-                            id="id"
-                            type="hidden"
-                            v-model="form.id"
-                        />
-                        
-                        <TextInput 
-                            id="dificultad_id"
-                            type="hidden"
-                            v-model="form.dificultad_id"
-                        />                                        
-                    </div>
-                    
-                    <div class="mb-4">
-                        <InputLabel for="titulo" value="Titulo de la tarea *" />
-                        <TextInput 
-                            id="titulo"
-                            type="text"
-                            class="w-full mt-2"
-                            v-model="form.titulo"
-                        />
-                        <span v-if="errors.titulo" class="text-red-500">{{ errors.titulo[0] }}</span>
-                    </div>
-                    
-                    <div class="mb-4">
-                        <InputLabel for="fechaentrega" value="Fecha de entrega *" />
-                        <TextInput 
-                            id="fechaentrega"
-                            type="date"
-                            class="w-full mt-2"
-                            v-model="form.fechaentrega"
-                        />
-                        <span v-if="errors.fechaentrega" class="text-red-500">{{ errors.fechaentrega[0] }}</span>
-                    </div>
-
-                    <div class="mb-4">
-                        <InputLabel for="materias_id" value="Materia *"/>
-                        <Select
-                            id="materias_id"
-                            class="w-full mt-2"
-                            v-model="form.materias_id"
-                            @change="CompleteInputandStatus"
-                        >
-                            <option v-for="item in materias" :value="item.id">{{ item.name }}</option>
-                        </Select>
-                    </div>
-                    
-                    <div class="flex mb-4">
-                        <p class="mr-2 font-semibold">Nivel de dificultad:</p>
-                        <span
-                        :class="{
-                           'text-red-500': dificultad_name === 'Dificultad alta',
-                           'text-yellow-500': dificultad_name === 'Dificultad media',
-                           'text-blue-500': dificultad_name === 'Dificultad baja',
-                           
-                        }">{{ dificultad_name }}</span>
-                    </div>                    
-
-                    <div class="mb-4">
-                        <InputLabel for="profesor" value="Profesor" />
-                        <TextInput 
-                            readonly
-                            id="profesor"
-                            type="text"
-                            class="w-full mt-2 bg-gray-100"
-                            v-model="form.profesor"
-                        />
-                    </div> 
-
-                    <div class="mb-4" v-if="showEstatus">
-                        <InputLabel for="estatus_id" value="Estatus"/>
-                        <Select
-                            id="estatus_id"
-                            class="w-full mt-2"
-                            v-model="form.estatus_id"
-                        >
-                            <option v-for="item in estatus" :value="item.id">{{ item.name }}</option>
-                        </Select>
-                    </div>
-                    
-                    <div class="mb-4">
-                        <InputLabel for="descripcion" value="Descripción de la tarea *" />
-                        <TextTarea 
-                            id="descripcion"
-                            class="w-full mt-2"
-                            v-model="form.descripcion"
-                        />
-                        <span v-if="errors.descripcion" class="text-red-500">{{ errors.descripcion[0] }}</span>
-                    </div>
-                    
-                </div>
                 
+        <DrawerLeft class="hidden md:block" :isOpen="opendrawer" @close="closeDrawerLeft" :title="titledrawer">  
+            
+            <FormCreateTask
+                :form="form"
+                :submit="submit"
+                :errors="errors" 
+                :dificultad_name="dificultad_name"
+                :materias="materias"
+                :estatus="estatus"
+                :CompleteInputandStatus="CompleteInputandStatus"
+                :showInputEstatus="showInputEstatus"
+            />
+                
+            <template #footer>
                 <div class="flex justify-end">
-                    <PrimaryButton :disabled="loadSpinner">
+                    <PrimaryButton :disabled="loadSpinner" @click="submit">
                         <div v-if="loadSpinner">
                             <Spinner />
                         </div>
@@ -259,9 +172,42 @@ const CompleteInputandStatus = async () => {
                         </div>                                
                     </PrimaryButton>
                 </div>
-            </form>
+            </template>
+                        
         </DrawerLeft>
-    
+
+        <DrawerBottom class="md:hidden" :isOpen="opendrawer" @close="closeDrawerLeft" :title="titledrawer">
+            
+            <FormCreateTask
+                :form="form"
+                :submit="submit"
+                :errors="errors" 
+                :dificultad_name="dificultad_name"
+                :materias="materias"
+                :estatus="estatus"
+                :CompleteInputandStatus="CompleteInputandStatus"
+                :showInputEstatus="showInputEstatus"
+            />
+            
+            <template #footer>
+                <div class="flex justify-end px-3">
+                    <PrimaryButton :disabled="loadSpinner" @click="submit" class="flex justify-center w-full md:block">
+                        <div v-if="loadSpinner">
+                            <Spinner />
+                        </div>
+                        <div v-else class="flex items-center space-x-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                            </svg>
+                            <p>{{ titledrawer }}</p>
+                        </div>                                
+                    </PrimaryButton>
+                </div>        
+                
+            </template>
+            
+        </DrawerBottom>
+        
         <div class="py-6">
             <div class="container mx-auto sm:px-6 lg:px-8">
                 <div class="p-6 text-gray-900">
@@ -269,7 +215,7 @@ const CompleteInputandStatus = async () => {
                         
                         <h3 class="text-2xl font-bold">Bienvenido {{ $page.props.auth.user.name }}</h3>
 
-                        <PrimaryButton type="button" @click="openAside(false)">
+                        <PrimaryButton type="button" @click="openDrawerLeft(false)">
                             <div class="flex items-center space-x-2">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
@@ -361,10 +307,7 @@ const CompleteInputandStatus = async () => {
                                         </div>                                        
                                     </SecondaryButton>
                                     <DangerButton type="button" class="cursor-pointer" @click="DeleteTarea(item.id)">
-                                        <div v-if="loadSpinnerDelete">
-                                            <Spinner />
-                                        </div>
-                                        <div v-else class="flex items-center">
+                                        <div class="flex items-center">
                                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-2 size-6">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
                                             </svg>
