@@ -3,6 +3,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { ref } from 'vue';
 import { Head, useForm, router } from '@inertiajs/vue3';
 import DrawerLeft from '@/Components/DrawerLeft.vue';
+import DrawerBottom from '@/Components/DrawerBottom.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import DangerButton from '@/Components/DangerButton.vue';
 import TextInput from '@/Components/TextInput.vue';
@@ -11,9 +12,10 @@ import Select from '@/Components/Select.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
 import Spinner from '@/Components/Spinner.vue';
 import axios from 'axios';
+import FormCreateTeachers from '@/Components/FormCreateTeachers.vue';
 
 defineProps({
-    dificultad: Object, 
+    dificultad: Object,
     materias: Object,
 })
 
@@ -106,6 +108,8 @@ const DeleteMateria = async (id)  => {
     }
 } 
 
+document.addEventListener
+
 </script>
 
 <template>
@@ -113,49 +117,11 @@ const DeleteMateria = async (id)  => {
 
     <AuthenticatedLayout>
 
-        <DrawerLeft :isOpen="opendrawer" @close="closeDrawer" :title="titledrawer">       
-            <form @submit.prevent="submit" method="post" class="flex flex-col w-full h-full gap-5">
-                <div class="max-h-[400px] sm:max-h-[550px] overflow-y-auto p-5">
-                    <TextInput 
-                        id="id"
-                        type="hidden"
-                        v-model="form.id"
-                    />
-                    <div class="mb-4">
-                        <InputLabel for="name" value="Materia *" />
-                        <TextInput 
-                            id="name"
-                            type="text"
-                            class="w-full mt-2"
-                            v-model="form.name"
-                        />
-                        <span v-if="errors.name" class="text-red-500">{{ errors.name[0] }}</span>
-                    </div>
-                    
-                    <div class="mb-4">
-                        <InputLabel for="profesor" value="Profesor" />
-                        <TextInput 
-                            id="profesor"
-                            type="text"
-                            class="w-full mt-2"
-                            v-model="form.profesor"
-                        />
-                    </div>
-
-                    <div class="">
-                        <InputLabel for="dificultad" value="Dificultad *"/>
-                        <Select
-                            id="dificultad"
-                            class="w-full mt-2"
-                            v-model="form.dificultad"
-                        >
-                            <option v-for="item in dificultad" :value="item.id">{{ item.name }}</option>
-                        </Select>
-                        <span v-if="errors.dificultad" class="text-red-500">{{ errors.dificultad[0] }}</span>
-                    </div>
-                                     
-                </div>
+        <DrawerLeft class="hidden md:block" :isOpen="opendrawer" @close="closeDrawer" :title="titledrawer">                   
+            
+            <FormCreateTeachers :form="form" :submit="submit" :dificultad="dificultad" :errors="errors"/>
                 
+            <template #footer>                    
                 <div class="flex justify-end"> 
                     <PrimaryButton :disabled="loadSpinner">
                         <div v-if="loadSpinner">
@@ -168,9 +134,33 @@ const DeleteMateria = async (id)  => {
                             <p>{{ titledrawer }}</p>
                         </div>                        
                     </PrimaryButton>
-                </div>
-            </form>
+                </div>                            
+            </template>
+                
         </DrawerLeft>
+        
+        <DrawerBottom class="md:hidden" :isOpen="opendrawer" @close="closeDrawer" :title="titledrawer">                   
+            
+            <FormCreateTeachers :form="form" :submit="submit" :dificultad="dificultad" :errors="errors"/>
+                
+            <template #footer>                    
+                <div class="flex justify-end"> 
+                    <PrimaryButton :disabled="loadSpinner">
+                        <div v-if="loadSpinner">
+                            <Spinner />
+                        </div>
+                        <div v-else class="flex items-center space-x-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                            </svg>
+                            <p>{{ titledrawer }}</p>
+                        </div>                        
+                    </PrimaryButton>
+                </div>                            
+            </template>
+                
+        </DrawerBottom>
+        
         <div class="py-6">
             <div class="container mx-auto sm:px-6 lg:px-8">
                 <div class="p-6 text-gray-900">

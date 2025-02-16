@@ -21,7 +21,7 @@ defineProps({
 
 <template>
 
-    <form @submit.prevent="submit" method="post" id="formsubmit" class="flex flex-col w-full h-full gap-5">
+    <form @submit.prevent="submit" method="post" id="formsubmit" class="flex flex-col w-full h-full gap-4">
         <div>
             <TextInput id="id" type="hidden" v-model="form.id" />
 

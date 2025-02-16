@@ -47,11 +47,11 @@ onUnmounted(() => {
         </div>
         <!-- drawer -->
         <div 
-            :class="['fixed bottom-0 left-0 w-full h-auto flex flex-col grow bg-white rounded-t-xl rounded-r-xl shadow-lg transform transition-transform duration-300', 
-            { 
-                'translate-y-full': !isOpen
-            }
-            ]"        
+            :class="['fixed bottom-0 left-0 w-full max-h-full flex flex-col grow bg-white rounded-t-xl rounded-r-xl shadow-lg transform transition-transform duration-300', 
+                {
+                    'translate-y-full': !isOpen
+                }
+            ]"
         >
             <!-- header -->
             <div class="flex items-center justify-between w-full p-4 border-b-2 border-gray-100">
@@ -68,7 +68,7 @@ onUnmounted(() => {
                     <slot />
                 </div>
 
-                <div v-if="$slots.footer">
+                <div v-if="$slots.footer" class="mt-5">
                     <slot name="footer" />
                 </div>
             </div>

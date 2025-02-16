@@ -145,7 +145,7 @@ const CompleteInputandStatus = async () => {
 
     <AuthenticatedLayout>
                 
-        <DrawerLeft class="hidden md:block" :isOpen="opendrawer" @close="closeDrawerLeft" :title="titledrawer">  
+        <DrawerLeft class="hidden sm:block" :isOpen="opendrawer" @close="closeDrawerLeft" :title="titledrawer">  
             
             <FormCreateTask
                 :form="form"
@@ -176,7 +176,7 @@ const CompleteInputandStatus = async () => {
                         
         </DrawerLeft>
 
-        <DrawerBottom class="md:hidden" :isOpen="opendrawer" @close="closeDrawerLeft" :title="titledrawer">
+        <DrawerBottom class="sm:hidden" :isOpen="opendrawer" @close="closeDrawerLeft" :title="titledrawer">
             
             <FormCreateTask
                 :form="form"

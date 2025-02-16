@@ -63,7 +63,7 @@ onUnmounted(() => {
                     <slot />
                 </div>
                 <!-- footer -->
-                <div v-if="$slots.footer">
+                <div v-if="$slots.footer" class="mt-5">
                     <slot name="footer" />
                 </div>
             </div>
