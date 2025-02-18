@@ -14,7 +14,7 @@ class SeederDificultad extends Seeder
     public function run(): void
     {        
         dificultad::create(
-            ['name' => 'Alta Dificultad']            
+            ['name' => 'Dificultad alta']            
         );
 
         dificultad::create(            
@@ -22,7 +22,7 @@ class SeederDificultad extends Seeder
         );
 
         dificultad::create(            
-            ['name' => 'Baja Dificultad']
+            ['name' => 'Dificultad baja']
         );
     }
 }

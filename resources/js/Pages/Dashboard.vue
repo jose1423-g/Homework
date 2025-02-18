@@ -32,7 +32,7 @@ const showInputEstatus = ref(false);
 const openDrawerLeft = (id) => {
     titledrawer.value = id ? 'Editar tarea' : 'Agregar tarea';    
     document.body.style.overflow = 'hidden';
-    opendrawer.value = true;
+    opendrawer.value = true;    
 }
 
 function closeDrawerLeft() {  
@@ -41,6 +41,7 @@ function closeDrawerLeft() {
     showInputEstatus.value  = false;
     opendrawer.value = false;    
     errors.value = [];
+    dificultad_name.value = '';
 }
 
 const form = useForm({
@@ -130,7 +131,7 @@ const CompleteInputandStatus = async () => {
     
     try {
         let response = await axios.post(route('get.materia', form.materias_id));
-        form.profesor = response.data.materias.name;
+        form.profesor = response.data.materias.profesor;
         form.dificultad_id = response.data.materias.dificultad_id;
         dificultad_name.value = response.data.dificultad.name;
     } catch (error) {

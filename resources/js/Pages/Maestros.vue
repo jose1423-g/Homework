@@ -123,7 +123,7 @@ document.addEventListener
                 
             <template #footer>                    
                 <div class="flex justify-end"> 
-                    <PrimaryButton :disabled="loadSpinner">
+                    <PrimaryButton :disabled="loadSpinner" @click="submit">
                         <div v-if="loadSpinner">
                             <Spinner />
                         </div>
@@ -145,7 +145,7 @@ document.addEventListener
                 
             <template #footer>                    
                 <div class="flex justify-end"> 
-                    <PrimaryButton :disabled="loadSpinner">
+                    <PrimaryButton :disabled="loadSpinner" @click="submit">
                         <div v-if="loadSpinner">
                             <Spinner />
                         </div>
